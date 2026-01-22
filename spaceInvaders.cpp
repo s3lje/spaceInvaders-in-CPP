@@ -19,23 +19,32 @@ struct Sprite{
 /* =====================
      SHADERS
    ===================== */
-const char* vertex_shader_src = 
-"#version 330 core\n"
-"noperspective out vec2 TexCoord;\n"
-"void main() {\n"
-"    TexCoord.x = (gl_VertexID == 2) ? 2.0 : 0.0;\n"
-"    TexCoord.y = (gl_VertexID == 1) ? 2.0 : 0.0;\n"
-"    gl_Position = vec4(2.0 * TexCoord - 1.0, 0.0, 1.0);\n"
-"}\n";
+const char* vertex_shader_src =
+    "\n"
+    "#version 330\n"
+    "\n"
+    "noperspective out vec2 TexCoord;\n"
+    "\n"
+    "void main(void){\n"
+    "\n"
+    "    TexCoord.x = (gl_VertexID == 2)? 2.0: 0.0;\n"
+    "    TexCoord.y = (gl_VertexID == 1)? 2.0: 0.0;\n"
+    "    \n"
+    "    gl_Position = vec4(2.0 * TexCoord - 1.0, 0.0, 1.0);\n"
+    "}\n";
 
-const char* fragment_shader_src = 
-"#version 330 core\n"
-"uniform sampler2D buffer;\n"
-"noperspecitve in vec2 TexCoord;\n"
-"out vec3 outColor;\n"
-"void main() {\n"
-"    outColor = texture(buffer, TexCoord).rgb;\n"
-"}\n";
+const char* fragment_shader_src =
+    "\n"
+    "#version 330\n"
+    "\n"
+    "uniform sampler2D buffer;\n"
+    "noperspective in vec2 TexCoord;\n"
+    "\n"
+    "out vec3 outColor;\n"
+    "\n"
+    "void main(void){\n"
+    "    outColor = texture(buffer, TexCoord).rgb;\n"
+    "}\n";
 
 void error_callback(int, const char*);
 void validate_shader(GLuint, const char*);
@@ -86,12 +95,12 @@ int main(){
     const size_t buffer_width  = 320;
     const size_t buffer_height = 240; 
     
+    uint32_t clear_color = rgb_to_uint32(0, 128, 0);
     Buffer buffer;
     buffer.width  = buffer_width;
     buffer.height = buffer_height;
     buffer.data   = new uint32_t[buffer_width * buffer_height];
-
-    uint32_t clear_color = rgb_to_uint32(0, 128, 0);
+    buffer_clear(&buffer, clear_color);
 
     // Alien Sprite
     Sprite alien;
