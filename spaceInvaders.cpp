@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#define GAME_MAX_BULLETS 128
 
 // CPU buffer
 struct Buffer {
@@ -34,14 +35,22 @@ struct Player {
     size_t life;
 };
 
+struct Bullet {
+    size_t x, y;
+    int dir;
+};
+
 struct Game {
     size_t width, height; 
     size_t num_aliens;
+    size_t num_bullets;
     Alien* aliens;
     Player player;
+    Bullet bullets[GAME_MAX_BULLETS];
 };
 
 bool game_running = 1; 
+bool fire_pressed = 0;
 int move_dir      = 0;
 
 /* =====================
@@ -185,6 +194,13 @@ int main(){
         1,1,1,1,1,1,1,1,1,1,1,
         1,1,1,1,1,1,1,1,1,1,1};
 
+    Sprite bullet_sprite;
+    bullet_sprite.width = 1;
+    bullet_sprite.height = 3;
+    bullet_sprite.data = new uint8_t[3]{
+        1,
+        1,
+        1};
 
     // Initialiser Game strukten
     Game game;
@@ -257,7 +273,7 @@ int main(){
     while (!glfwWindowShouldClose(window) && game_running){
         buffer_clear(&buffer, clear_color);
         
-        // Draw Alien Sprite
+        //---------- Initialiser Sprites----------//
         for (size_t ai = 0; ai < game.num_aliens; ++ai){
             const Alien& alien = game.aliens[ai];
             size_t current_frame = alien_animation->time / alien_animation->frame_duration;
@@ -269,8 +285,26 @@ int main(){
         buffer_sprite_draw(&buffer, player_sprite,
                 game.player.x, game.player.y, rgb_to_uint32(255, 255, 255));
         
+        for (size_t bi = 0; bi < game.num_bullets; ++bi){
+            const Bullet& bullet = game.bullets[bi];
+            const Sprite& sprite = bullet_sprite;
+            buffer_sprite_draw(&buffer, sprite, bullet.x, bullet.y, rgb_to_uint32(255, 255, 255));
+        }
+        
+        for (size_t bi = 0; bi < game.num_bullets;){
+            game.bullets[bi].y += game.bullets[bi].dir;
+            if (game.bullets[bi].y >= game.height || game.bullets[bi].y < bullet_sprite.height){
+                game.bullets[bi] = game.bullets[game.num_bullets - 1];
+                --game.num_bullets;
+                continue; 
+            }
 
-        // Update Alien Animation 
+            ++bi; 
+        }
+
+        //----------------------------------------//
+
+        // Oppdaterer Alien Animasjonen 
         ++alien_animation->time;
         if (alien_animation->time == alien_animation->num_frames *
                 alien_animation->frame_duration){
@@ -291,6 +325,14 @@ int main(){
             } else
                 game.player.x += player_move_dir; 
         }
+        
+        if (fire_pressed && game.num_bullets < GAME_MAX_BULLETS){
+            game.bullets[game.num_bullets].x = game.player.x + player_sprite.width / 2;
+            game.bullets[game.num_bullets].y = game.player.y + player_sprite.height;
+            game.bullets[game.num_bullets].dir = 2;
+            ++game.num_bullets; 
+        }
+        fire_pressed = false;
 
         glTexSubImage2D(
             GL_TEXTURE_2D, 0, 0, 0,
@@ -330,6 +372,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         case GLFW_KEY_LEFT:
             if (action == GLFW_PRESS) move_dir -= 1;
             else if (action == GLFW_RELEASE) move_dir += 1;
+            break;
+        case GLFW_KEY_SPACE:
+            if (action == GLFW_PRESS) fire_pressed = true;
             break;
         default:
             break;
